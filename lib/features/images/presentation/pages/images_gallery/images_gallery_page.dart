@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer' as dev;
 
 import 'images_gallery_page_vm.dart';
 
 /// Виджет, который отображает галерею изображений, полученных из удаленного источника.
-/// 
+///
 /// `ImagesGalleryPage` - это страница, который слушает провайдер состояния
 /// и отображает сетку изображений. Пользователи могут искать изображения с помощью строки поиска,
 /// а также загружать больше изображений, прокручивая страницу до конца.
-/// 
+///
 /// Этот виджет использует Flutter Riverpod для управления состоянием и обрабатывает асинхронную
 /// загрузку данных, фильтрацию поиска и навигацию к просмотру изображения в полноэкранном режиме.
-/// 
+///
 /// Пример использования:
-/// 
+///
 /// ```dart
 /// MaterialApp(
 ///   home: ImagesGalleryPage(),
@@ -28,6 +29,11 @@ class ImagesGalleryPage extends ConsumerWidget {
     final vm = imagesGalleryPageVmProvider;
     final vmProvider = ref.watch(vm);
     final images = vmProvider.shownImages;
+    dev.log(_calculateAvailableImagesOnScreenCount(context).toString());
+    if (_calculateAvailableImagesOnScreenCount(context) >
+        vmProvider.allImages.length) {
+      ref.read(vm.notifier).loadNextPage();
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -87,14 +93,29 @@ class ImagesGalleryPage extends ConsumerWidget {
   }
 
   /// Рассчитывает количество столбцов в сетке на основе ширины экрана.
-  /// 
+  ///
   /// Этот метод делит ширину экрана на 150 пикселей, чтобы определить
   /// подходящее количество столбцов для сетки. Это гарантирует, что
   /// изображения будут отображаться в сетке с квадратным соотношением сторон.
-  /// 
+  ///
   /// Возвращает целое число, представляющее количество столбцов.
   int _calculateCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     return (width / 150).floor();
+  }
+
+  /// Рассчитывает количество возможный картинок на экране.
+  ///
+  /// Этот метод делит высоту экрана на 150 пикселей, чтобы определить
+  /// количество строк для сетки. Потом умножает на количество столбцов.
+  ///
+  /// Возвращает целое число, представляющее количество картинок.
+  int _calculateAvailableImagesOnScreenCount(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+        dev.log('height: $height');
+
+    final rowsCount = ((height) / 150).floor();
+    dev.log('rows: $rowsCount');
+    return (rowsCount * _calculateCrossAxisCount(context));
   }
 }
